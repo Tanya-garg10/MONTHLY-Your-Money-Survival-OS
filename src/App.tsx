@@ -3,6 +3,11 @@ import { FinanceProvider, useFinance } from './context/FinanceContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { MobileNav } from './components/layout/MobileNav';
+import { TransactionModal } from './components/transactions/TransactionModal';
+import { ProfileModal } from './components/common/ProfileModal';
+import { ConfirmModal } from './components/common/ConfirmModal';
+import { ToastContainer } from './components/common/ToastContainer';
+import { Transaction } from './types/finance';
 import { OverviewTab } from './components/overview/OverviewTab';
 import { TransactionsTab } from './components/transactions/TransactionsTab';
 import { BudgetPlannerTab } from './components/budget/BudgetPlannerTab';
@@ -10,11 +15,6 @@ import { WhatIfLabTab } from './components/whatif/WhatIfLabTab';
 import { SavingsGoalsTab } from './components/savings/SavingsGoalsTab';
 import { SubscriptionsTab } from './components/subscriptions/SubscriptionsTab';
 import { InsightsTab } from './components/insights/InsightsTab';
-import { TransactionModal } from './components/transactions/TransactionModal';
-import { ProfileModal } from './components/common/ProfileModal';
-import { ConfirmModal } from './components/common/ConfirmModal';
-import { ToastContainer } from './components/common/ToastContainer';
-import { Transaction } from './types/finance';
 
 const MainAppContent: React.FC = () => {
   const { activeTab, resetToDemo } = useFinance();

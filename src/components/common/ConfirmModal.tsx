@@ -48,8 +48,9 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           <button
             onClick={onCancel}
             className="text-zinc-400 hover:text-white p-1 rounded-md transition-colors"
+            aria-label="Close dialog"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
 

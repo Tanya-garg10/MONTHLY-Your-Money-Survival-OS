@@ -91,9 +91,10 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({
         </div>
         <button
           onClick={onOpenAddModal}
-          className="flex items-center gap-2 px-4 py-2 bg-[#C7FF4A] hover:bg-[#b5ee3a] text-black font-bold text-xs sm:text-sm rounded-lg transition-all shadow-sm"
+          className="flex items-center gap-2 px-4 py-2 bg-[#C7FF4A] hover:bg-[#b5ee3a] text-black font-bold text-xs sm:text-sm rounded-lg transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C7FF4A] focus:ring-offset-2 focus:ring-offset-[#0B0D0C]"
+          aria-label="Add new transaction"
         >
-          <Plus className="w-4 h-4 stroke-[2.5]" />
+          <Plus className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />
           <span>Record Transaction</span>
         </button>
       </div>
