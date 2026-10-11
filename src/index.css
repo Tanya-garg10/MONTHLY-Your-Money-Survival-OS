@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-main: #0B0D0C;
+    --card-surface: #141816;
+    --card-hover: #191E1B;
+    --accent-lime: #C7FF4A;
+    --border-subtle: #222925;
+    --text-primary: #F3F4F3;
+    --text-muted: #8E9590;
+  }
+
+  body {
+    background-color: #0B0D0C;
+    color: #F3F4F3;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Tabular mono numbers for financial figures */
+.font-mono-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-feature-settings: "tnum" on, "lnum" on, "zero" on;
+}
+
+/* Custom sleek scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0B0D0C;
+}
+::-webkit-scrollbar-thumb {
+  background: #222925;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #343E38;
+}
+
+/* Subtle glow utilities */
+.glow-lime-sm {
+  box-shadow: 0 0 15px -3px rgba(199, 255, 74, 0.15);
+}
+
+.glow-lime-md {
+  box-shadow: 0 0 25px -4px rgba(199, 255, 74, 0.25);
+}
+
+.glow-amber-sm {
+  box-shadow: 0 0 15px -3px rgba(245, 158, 11, 0.15);
+}
+
+.glow-red-sm {
+  box-shadow: 0 0 15px -3px rgba(239, 68, 68, 0.15);
+}
