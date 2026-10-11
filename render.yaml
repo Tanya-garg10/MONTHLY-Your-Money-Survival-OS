@@ -2,7 +2,7 @@ services:
   - type: web
     name: monthly-money-survival-os
     env: static
-    buildCommand: npm run build
+    buildCommand: npm install && npm run build
     staticPublishPath: ./dist
     envVars:
       - key: FEATHERLESS_API_KEY
