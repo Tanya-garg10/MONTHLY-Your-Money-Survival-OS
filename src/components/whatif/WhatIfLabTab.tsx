@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, lazy, Suspense } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { WhatIfScenario, CategoryId } from '../../types/finance';
 import { CATEGORY_LIST, CATEGORIES } from '../../data/categories';
@@ -20,15 +20,14 @@ import {
   ArrowUpRight,
   Info,
 } from 'lucide-react';
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-} from 'recharts';
+
+// Lazy load chart components
+const ResponsiveContainer = lazy(() => import('recharts').then(m => ({ default: m.ResponsiveContainer })));
+const LineChart = lazy(() => import('recharts').then(m => ({ default: m.LineChart })));
+const Line = lazy(() => import('recharts').then(m => ({ default: m.Line })));
+const XAxis = lazy(() => import('recharts').then(m => ({ default: m.XAxis })));
+const YAxis = lazy(() => import('recharts').then(m => ({ default: m.YAxis })));
+const Tooltip = lazy(() => import('recharts').then(m => ({ default: m.Tooltip })));
 
 interface PresetScenario {
   label: string;
@@ -339,7 +338,7 @@ export const WhatIfLabTab: React.FC = () => {
       </div>
 
       {/* Real-Time Natural Language Impact Callout */}
-      <div className="p-5 bg-[#141816] border border-[#C7FF4A]/40 rounded-2xl relative overflow-hidden space-y-2">
+      <div className="p-5 bg-[#141816] border border-[#C7FF4A]/40 rounded-2xl relative overflow-hidden space-y-3">
         <div className="flex items-center gap-2 text-xs font-bold text-[#C7FF4A] uppercase tracking-wider font-mono-num">
           <Info className="w-4 h-4" />
           <span>Real-time Financial Impact Analysis</span>
@@ -347,6 +346,19 @@ export const WhatIfLabTab: React.FC = () => {
         <p className="text-sm sm:text-base text-zinc-100 font-medium leading-relaxed">
           {explanation}
         </p>
+        <div className="pt-2 border-t border-[#C7FF4A]/20 text-xs text-zinc-400">
+          <span className="font-semibold text-zinc-300">Key Insight:</span> This decision{' '}
+          {type === 'expense' ? (
+            <span className="text-rose-400">
+              reduces your survival runway by {Math.round(amount / afterMetrics.safeToSpendPerDay)} days
+            </span>
+          ) : (
+            <span className="text-[#C7FF4A]">
+              extends your survival runway by {Math.round(amount / afterMetrics.safeToSpendPerDay)} days
+            </span>
+          )}{' '}
+          at current spending pace.
+        </div>
       </div>
 
       {/* Live Before vs After Comparison Grid */}
@@ -524,59 +536,61 @@ export const WhatIfLabTab: React.FC = () => {
         </div>
 
         <div className="h-64 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={forecast} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <XAxis
-                dataKey="label"
-                stroke="#4B5563"
-                tick={{ fill: '#8E9590', fontSize: 11 }}
-                interval={4}
-              />
-              <YAxis
-                stroke="#4B5563"
-                tick={{ fill: '#8E9590', fontSize: 11 }}
-                tickFormatter={(v) => `₹${v}`}
-              />
-              <Tooltip
-                content={({ active, payload }) => {
-                  if (active && payload && payload.length) {
-                    const data = payload[0].payload;
-                    return (
-                      <div className="p-3 bg-[#0B0D0C] border border-[#222925] rounded-lg shadow-xl text-xs space-y-1 font-mono-num">
-                        <div className="font-bold text-white border-b border-[#222925] pb-1">
-                          {data.label}
-                        </div>
-                        <div className="text-zinc-400">
-                          Baseline: {formatINR(data.projectedBalance)}
-                        </div>
-                        {data.simulatedBalance !== undefined && (
-                          <div className="text-[#C7FF4A] font-bold">
-                            Simulated: {formatINR(data.simulatedBalance)}
+          <Suspense fallback={<div className="h-full flex items-center justify-center text-zinc-500 text-sm">Loading chart...</div>}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={forecast} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <XAxis
+                  dataKey="label"
+                  stroke="#4B5563"
+                  tick={{ fill: '#8E9590', fontSize: 11 }}
+                  interval={4}
+                />
+                <YAxis
+                  stroke="#4B5563"
+                  tick={{ fill: '#8E9590', fontSize: 11 }}
+                  tickFormatter={(v) => `₹${v}`}
+                />
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="p-3 bg-[#0B0D0C] border border-[#222925] rounded-lg shadow-xl text-xs space-y-1 font-mono-num">
+                          <div className="font-bold text-white border-b border-[#222925] pb-1">
+                            {data.label}
                           </div>
-                        )}
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="projectedBalance"
-                stroke="#6B7280"
-                strokeDasharray="4 4"
-                strokeWidth={2}
-                dot={false}
-              />
-              <Line
-                type="monotone"
-                dataKey="simulatedBalance"
-                stroke="#C7FF4A"
-                strokeWidth={2.5}
-                dot={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+                          <div className="text-zinc-400">
+                            Baseline: {formatINR(data.projectedBalance)}
+                          </div>
+                          {data.simulatedBalance !== undefined && (
+                            <div className="text-[#C7FF4A] font-bold">
+                              Simulated: {formatINR(data.simulatedBalance)}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="projectedBalance"
+                  stroke="#6B7280"
+                  strokeDasharray="4 4"
+                  strokeWidth={2}
+                  dot={false}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="simulatedBalance"
+                  stroke="#C7FF4A"
+                  strokeWidth={2.5}
+                  dot={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </Suspense>
         </div>
       </div>
     </div>

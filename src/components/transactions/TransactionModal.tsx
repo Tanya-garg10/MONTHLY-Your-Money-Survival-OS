@@ -117,43 +117,47 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Type Segmented Toggle */}
-          <div className="grid grid-cols-2 p-1 bg-[#0B0D0C] border border-[#222925] rounded-lg">
+          <fieldset className="grid grid-cols-2 p-1 bg-[#0B0D0C] border border-[#222925] rounded-lg">
+            <legend className="sr-only">Transaction Type</legend>
             <button
               type="button"
               onClick={() => setType('expense')}
+              aria-pressed={type === 'expense'}
               className={`flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-md transition-all ${
                 type === 'expense'
                   ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
                   : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
-              <ArrowDownRight className="w-3.5 h-3.5" />
+              <ArrowDownRight className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Expense</span>
             </button>
             <button
               type="button"
               onClick={() => setType('income')}
+              aria-pressed={type === 'income'}
               className={`flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-md transition-all ${
                 type === 'income'
                   ? 'bg-[#C7FF4A]/15 text-[#C7FF4A] border border-[#C7FF4A]/30'
                   : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
-              <ArrowUpRight className="w-3.5 h-3.5" />
+              <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Income</span>
             </button>
-          </div>
+          </fieldset>
 
           {/* Amount Input */}
           <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+            <label htmlFor="transaction-amount" className="block text-xs font-medium text-zinc-400 mb-1.5">
               Amount (₹)
             </label>
             <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 font-bold text-sm">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 font-bold text-sm" aria-hidden="true">
                 ₹
               </span>
               <input
+                id="transaction-amount"
                 type="number"
                 min="1"
                 step="1"
@@ -162,16 +166,19 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                 onChange={(e) => setAmount(e.target.value)}
                 className="w-full pl-8 pr-4 py-2.5 bg-[#0B0D0C] border border-[#222925] focus:border-[#C7FF4A] rounded-lg text-sm text-white font-mono-num font-semibold outline-none transition-colors"
                 autoFocus
+                aria-invalid={error !== ''}
+                aria-describedby={error ? 'transaction-error' : undefined}
               />
             </div>
           </div>
 
           {/* Title Input */}
           <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+            <label htmlFor="transaction-title" className="block text-xs font-medium text-zinc-400 mb-1.5">
               Description / Merchant
             </label>
             <input
+              id="transaction-title"
               type="text"
               placeholder="e.g. Blinkit snacks, Metro recharge, Freelance split"
               value={title}
@@ -182,42 +189,31 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
           {/* Category Selector */}
           <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+            <label htmlFor="transaction-category" className="block text-xs font-medium text-zinc-400 mb-1.5">
               Category
             </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {CATEGORY_LIST.map((cat) => {
-                const isSelected = category === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => setCategory(cat.id)}
-                    className={`flex items-center gap-2 p-2 rounded-lg border text-left text-xs transition-all ${
-                      isSelected
-                        ? 'border-[#C7FF4A] bg-[#C7FF4A]/10 text-white'
-                        : 'border-[#222925] bg-[#0B0D0C] text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
-                    }`}
-                  >
-                    <CategoryIcon
-                      name={cat.id}
-                      className="w-3.5 h-3.5 shrink-0"
-                      style={{ color: cat.color }}
-                    />
-                    <span className="truncate">{cat.name}</span>
-                  </button>
-                );
-              })}
-            </div>
+            <select
+              id="transaction-category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value as CategoryId)}
+              className="w-full px-3.5 py-2.5 bg-[#0B0D0C] border border-[#222925] focus:border-[#C7FF4A] rounded-lg text-sm text-white outline-none transition-colors"
+            >
+              {CATEGORY_LIST.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Cycle Day & Calendar Date */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+              <label htmlFor="transaction-cycle-day" className="block text-xs font-medium text-zinc-400 mb-1.5">
                 Cycle Day (1-30)
               </label>
               <input
+                id="transaction-cycle-day"
                 type="number"
                 min="1"
                 max={state.cycleTotalDays}
@@ -227,10 +223,11 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+              <label htmlFor="transaction-date" className="block text-xs font-medium text-zinc-400 mb-1.5">
                 Date
               </label>
               <input
+                id="transaction-date"
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
@@ -241,10 +238,11 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
           {/* Notes */}
           <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+            <label htmlFor="transaction-notes" className="block text-xs font-medium text-zinc-400 mb-1.5">
               Optional Note
             </label>
             <input
+              id="transaction-notes"
               type="text"
               placeholder="Any details to remember..."
               value={notes}

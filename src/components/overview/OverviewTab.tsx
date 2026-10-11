@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, lazy, Suspense } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { formatINR, formatINRCompact } from '../../utils/formatters';
 import { CATEGORIES } from '../../data/categories';
@@ -19,19 +19,17 @@ import {
   ChevronRight,
   Info,
 } from 'lucide-react';
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  PieChart,
-  Pie,
-  Cell,
-  Area,
-  AreaChart,
-} from 'recharts';
+
+// Lazy load chart components to reduce initial bundle size
+const AreaChart = lazy(() => import('recharts').then(m => ({ default: m.AreaChart })));
+const Area = lazy(() => import('recharts').then(m => ({ default: m.Area })));
+const PieChart = lazy(() => import('recharts').then(m => ({ default: m.PieChart })));
+const Pie = lazy(() => import('recharts').then(m => ({ default: m.Pie })));
+const Cell = lazy(() => import('recharts').then(m => ({ default: m.Cell })));
+const ResponsiveContainer = lazy(() => import('recharts').then(m => ({ default: m.ResponsiveContainer })));
+const XAxis = lazy(() => import('recharts').then(m => ({ default: m.XAxis })));
+const YAxis = lazy(() => import('recharts').then(m => ({ default: m.YAxis })));
+const Tooltip = lazy(() => import('recharts').then(m => ({ default: m.Tooltip })));
 
 interface OverviewTabProps {
   onOpenAddTx: () => void;
@@ -308,61 +306,63 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ onOpenAddTx }) => {
         </div>
 
         <div className="h-64 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={forecastData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="balanceGlow" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#C7FF4A" stopOpacity={0.25} />
-                  <stop offset="95%" stopColor="#C7FF4A" stopOpacity={0.0} />
-                </linearGradient>
-              </defs>
-              <XAxis
-                dataKey="label"
-                stroke="#4B5563"
-                tick={{ fill: '#8E9590', fontSize: 11 }}
-                interval={4}
-              />
-              <YAxis
-                stroke="#4B5563"
-                tick={{ fill: '#8E9590', fontSize: 11 }}
-                tickFormatter={(v) => `₹${v}`}
-              />
-              <Tooltip
-                content={({ active, payload }) => {
-                  if (active && payload && payload.length) {
-                    const data = payload[0].payload;
-                    return (
-                      <div className="p-3 bg-[#0B0D0C] border border-[#222925] rounded-lg shadow-xl text-xs space-y-1 font-mono-num">
-                        <div className="font-bold text-white border-b border-[#222925] pb-1">
-                          {data.label} {data.isToday ? '(Today)' : ''}
-                        </div>
-                        {data.actualBalance !== undefined && (
-                          <div className="text-[#C7FF4A]">
-                            Actual Balance: {formatINR(data.actualBalance)}
+          <Suspense fallback={<div className="h-full flex items-center justify-center text-zinc-500 text-sm">Loading chart...</div>}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={forecastData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="balanceGlow" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#C7FF4A" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#C7FF4A" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+                <XAxis
+                  dataKey="label"
+                  stroke="#4B5563"
+                  tick={{ fill: '#8E9590', fontSize: 11 }}
+                  interval={4}
+                />
+                <YAxis
+                  stroke="#4B5563"
+                  tick={{ fill: '#8E9590', fontSize: 11 }}
+                  tickFormatter={(v) => `₹${v}`}
+                />
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="p-3 bg-[#0B0D0C] border border-[#222925] rounded-lg shadow-xl text-xs space-y-1 font-mono-num">
+                          <div className="font-bold text-white border-b border-[#222925] pb-1">
+                            {data.label} {data.isToday ? '(Today)' : ''}
                           </div>
-                        )}
-                        <div className="text-zinc-300">
-                          Projected Balance: {formatINR(data.projectedBalance)}
+                          {data.actualBalance !== undefined && (
+                            <div className="text-[#C7FF4A]">
+                              Actual Balance: {formatINR(data.actualBalance)}
+                            </div>
+                          )}
+                          <div className="text-zinc-300">
+                            Projected Balance: {formatINR(data.projectedBalance)}
+                          </div>
+                          <div className="text-zinc-500">
+                            Target Baseline: {formatINR(data.safeSpendBaseline)}
+                          </div>
                         </div>
-                        <div className="text-zinc-500">
-                          Target Baseline: {formatINR(data.safeSpendBaseline)}
-                        </div>
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-              />
-              <Area
-                type="monotone"
-                dataKey="projectedBalance"
-                stroke="#C7FF4A"
-                strokeWidth={2}
-                fillOpacity={1}
-                fill="url(#balanceGlow)"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="projectedBalance"
+                  stroke="#C7FF4A"
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#balanceGlow)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </Suspense>
         </div>
       </div>
 
@@ -385,32 +385,34 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ onOpenAddTx }) => {
             {/* Donut Chart */}
             <div className="h-44 flex items-center justify-center">
               {categoryPieData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={categoryPieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={45}
-                      outerRadius={70}
-                      paddingAngle={3}
-                      dataKey="value"
-                    >
-                      {categoryPieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value: any) => [formatINR(Number(value)), 'Spent']}
-                      contentStyle={{
-                        backgroundColor: '#0B0D0C',
-                        borderColor: '#222925',
-                        borderRadius: '8px',
-                        fontSize: '12px',
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                <Suspense fallback={<div className="text-xs text-zinc-500 text-center">Loading chart...</div>}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={categoryPieData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={45}
+                        outerRadius={70}
+                        paddingAngle={3}
+                        dataKey="value"
+                      >
+                        {categoryPieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value: any) => [formatINR(Number(value)), 'Spent']}
+                        contentStyle={{
+                          backgroundColor: '#0B0D0C',
+                          borderColor: '#222925',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </Suspense>
               ) : (
                 <div className="text-xs text-zinc-500 text-center">No expenses recorded</div>
               )}

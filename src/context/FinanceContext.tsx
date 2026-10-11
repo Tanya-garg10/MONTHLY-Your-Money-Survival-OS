@@ -12,6 +12,14 @@ import {
 import { INITIAL_FINANCIAL_STATE } from '../data/initialData';
 import { calculateMetrics } from '../engine/calculator';
 import { formatINR } from '../utils/formatters';
+import {
+  validateAmount,
+  validateDay,
+  validateCategoryId,
+  validateSubscriptionStatus,
+  validateSavingsPriority,
+  validateTransactionType,
+} from '../utils/validation';
 
 interface ToastState {
   id: number;
@@ -104,10 +112,21 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   // Transaction Actions
   const addTransaction = (tx: Omit<Transaction, 'id'>) => {
+    // Validate inputs
+    if (!validateTransactionType(tx.type)) {
+      showToast('Invalid transaction type', 'error');
+      return;
+    }
+    if (!validateCategoryId(tx.category)) {
+      showToast('Invalid category', 'error');
+      return;
+    }
+
     const newTx: Transaction = {
       ...tx,
       id: `tx-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      amount: Math.max(1, Math.round(Number(tx.amount))),
+      amount: validateAmount(tx.amount) || 1,
+      cycleDay: validateDay(tx.cycleDay, 1, state.cycleTotalDays),
     };
 
     setState((prev) => ({
@@ -129,7 +148,8 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
           ? {
               ...tx,
               ...updates,
-              amount: updates.amount ? Math.max(1, Math.round(Number(updates.amount))) : tx.amount,
+              amount: updates.amount ? validateAmount(updates.amount) || tx.amount : tx.amount,
+              cycleDay: updates.cycleDay ? validateDay(updates.cycleDay, 1, state.cycleTotalDays) : tx.cycleDay,
             }
           : tx
       ),
@@ -148,7 +168,11 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   // Category Budgets
   const updateCategoryBudget = (category: CategoryId, amount: number) => {
-    const safeAmount = Math.max(0, Math.round(amount));
+    if (!validateCategoryId(category)) {
+      showToast('Invalid category', 'error');
+      return;
+    }
+    const safeAmount = validateAmount(amount);
     setState((prev) => ({
       ...prev,
       categoryBudgets: {
@@ -160,11 +184,16 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   // Savings Goals
   const addSavingsGoal = (goal: Omit<SavingsGoal, 'id' | 'savedAmount'>) => {
+    if (!validateSavingsPriority(goal.priority)) {
+      showToast('Invalid priority level', 'error');
+      return;
+    }
     const newGoal: SavingsGoal = {
       ...goal,
       id: `goal-${Date.now()}`,
       savedAmount: 0,
-      targetAmount: Math.max(10, Math.round(goal.targetAmount)),
+      targetAmount: Math.max(10, validateAmount(goal.targetAmount)),
+      targetDay: validateDay(goal.targetDay, 1, state.cycleTotalDays),
     };
     setState((prev) => ({
       ...prev,
@@ -176,7 +205,16 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
   const updateSavingsGoal = (id: string, updates: Partial<SavingsGoal>) => {
     setState((prev) => ({
       ...prev,
-      savingsGoals: prev.savingsGoals.map((g) => (g.id === id ? { ...g, ...updates } : g)),
+      savingsGoals: prev.savingsGoals.map((g) =>
+        g.id === id
+          ? {
+              ...g,
+              ...updates,
+              targetAmount: updates.targetAmount ? Math.max(10, validateAmount(updates.targetAmount)) : g.targetAmount,
+              targetDay: updates.targetDay ? validateDay(updates.targetDay, 1, state.cycleTotalDays) : g.targetDay,
+            }
+          : g
+      ),
     }));
     showToast('Savings goal updated', 'info');
   };
@@ -200,7 +238,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
   const contributeToGoal = (goalId: string, amount: number): boolean => {
     const goal = state.savingsGoals.find((g) => g.id === goalId);
     if (!goal) return false;
-    const cleanAmount = Math.max(1, Math.round(amount));
+    const cleanAmount = validateAmount(amount);
 
     if (metrics.currentCashBalance < cleanAmount) {
       showToast(
@@ -223,7 +261,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
   const withdrawFromGoal = (goalId: string, amount: number): boolean => {
     const goal = state.savingsGoals.find((g) => g.id === goalId);
     if (!goal) return false;
-    const cleanAmount = Math.max(1, Math.round(amount));
+    const cleanAmount = validateAmount(amount);
 
     if (goal.savedAmount < cleanAmount) {
       showToast(
@@ -245,10 +283,19 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   // Subscriptions
   const addSubscription = (sub: Omit<Subscription, 'id'>) => {
+    if (!validateCategoryId(sub.category)) {
+      showToast('Invalid category', 'error');
+      return;
+    }
+    if (!validateSubscriptionStatus(sub.status)) {
+      showToast('Invalid subscription status', 'error');
+      return;
+    }
     const newSub: Subscription = {
       ...sub,
       id: `sub-${Date.now()}`,
-      amount: Math.max(1, Math.round(sub.amount)),
+      amount: validateAmount(sub.amount) || 1,
+      cycleDueDay: validateDay(sub.cycleDueDay, 1, state.cycleTotalDays),
     };
     setState((prev) => ({
       ...prev,
@@ -260,12 +307,25 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
   const updateSubscription = (id: string, updates: Partial<Subscription>) => {
     setState((prev) => ({
       ...prev,
-      subscriptions: prev.subscriptions.map((s) => (s.id === id ? { ...s, ...updates } : s)),
+      subscriptions: prev.subscriptions.map((s) =>
+        s.id === id
+          ? {
+              ...s,
+              ...updates,
+              amount: updates.amount ? validateAmount(updates.amount) || s.amount : s.amount,
+              cycleDueDay: updates.cycleDueDay ? validateDay(updates.cycleDueDay, 1, state.cycleTotalDays) : s.cycleDueDay,
+            }
+          : s
+      ),
     }));
     showToast('Subscription updated', 'info');
   };
 
   const toggleSubscriptionStatus = (id: string, newStatus: SubscriptionStatus) => {
+    if (!validateSubscriptionStatus(newStatus)) {
+      showToast('Invalid subscription status', 'error');
+      return;
+    }
     const sub = state.subscriptions.find((s) => s.id === id);
     if (!sub) return;
     setState((prev) => ({

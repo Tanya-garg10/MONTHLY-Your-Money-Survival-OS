@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, lazy, Suspense } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { formatINR, formatPercent } from '../../utils/formatters';
 import { CATEGORIES, CATEGORY_LIST } from '../../data/categories';
@@ -16,17 +16,14 @@ import {
   Layers,
   Sparkles,
 } from 'lucide-react';
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  LineChart,
-  Line,
-} from 'recharts';
+
+// Lazy load chart components
+const ResponsiveContainer = lazy(() => import('recharts').then(m => ({ default: m.ResponsiveContainer })));
+const BarChart = lazy(() => import('recharts').then(m => ({ default: m.BarChart })));
+const Bar = lazy(() => import('recharts').then(m => ({ default: m.Bar })));
+const XAxis = lazy(() => import('recharts').then(m => ({ default: m.XAxis })));
+const YAxis = lazy(() => import('recharts').then(m => ({ default: m.YAxis })));
+const Tooltip = lazy(() => import('recharts').then(m => ({ default: m.Tooltip })));
 
 export const InsightsTab: React.FC = () => {
   const { state, metrics, setActiveTab } = useFinance();
@@ -250,33 +247,35 @@ export const InsightsTab: React.FC = () => {
         </div>
 
         <div className="h-64 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={categoryBarData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <XAxis dataKey="name" stroke="#4B5563" tick={{ fill: '#8E9590', fontSize: 11 }} />
-              <YAxis
-                stroke="#4B5563"
-                tick={{ fill: '#8E9590', fontSize: 11 }}
-                tickFormatter={(v) => `₹${v}`}
-              />
-              <Tooltip
-                content={({ active, payload }) => {
-                  if (active && payload && payload.length) {
-                    const data = payload[0].payload;
-                    return (
-                      <div className="p-3 bg-[#0B0D0C] border border-[#222925] rounded-lg shadow-xl text-xs space-y-1 font-mono-num">
-                        <div className="font-bold text-white">{data.fullName}</div>
-                        <div className="text-zinc-400">Allocated: {formatINR(data.Allocated)}</div>
-                        <div className="text-[#C7FF4A] font-bold">Spent: {formatINR(data.Spent)}</div>
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-              />
-              <Bar dataKey="Allocated" fill="#222925" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="Spent" fill="#C7FF4A" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <Suspense fallback={<div className="h-full flex items-center justify-center text-zinc-500 text-sm">Loading chart...</div>}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={categoryBarData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <XAxis dataKey="name" stroke="#4B5563" tick={{ fill: '#8E9590', fontSize: 11 }} />
+                <YAxis
+                  stroke="#4B5563"
+                  tick={{ fill: '#8E9590', fontSize: 11 }}
+                  tickFormatter={(v) => `₹${v}`}
+                />
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="p-3 bg-[#0B0D0C] border border-[#222925] rounded-lg shadow-xl text-xs space-y-1 font-mono-num">
+                          <div className="font-bold text-white">{data.fullName}</div>
+                          <div className="text-zinc-400">Allocated: {formatINR(data.Allocated)}</div>
+                          <div className="text-[#C7FF4A] font-bold">Spent: {formatINR(data.Spent)}</div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Bar dataKey="Allocated" fill="#222925" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Spent" fill="#C7FF4A" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </Suspense>
         </div>
       </div>
 
