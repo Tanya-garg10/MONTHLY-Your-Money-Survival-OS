@@ -121,6 +121,40 @@ export interface DayForecastPoint {
   isToday: boolean;
 }
 
+export interface BudgetPressurePoint {
+  categoryId: CategoryId;
+  categoryName: string;
+  overspentAmount: number;
+  overspentPercentage: number;
+  isCritical: boolean;
+}
+
+export interface SavingsOpportunity {
+  categoryId: CategoryId;
+  categoryName: string;
+  currentSpent: number;
+  potentialSavings: number;
+  reductionPercentage: number;
+  dailyImpact: number;
+}
+
+export interface BudgetPressurePoint {
+  categoryId: CategoryId;
+  categoryName: string;
+  overspentAmount: number;
+  overspentPercentage: number;
+  isCritical: boolean;
+}
+
+export interface SavingsOpportunity {
+  categoryId: CategoryId;
+  categoryName: string;
+  currentSpent: number;
+  potentialSavings: number;
+  reductionPercentage: number;
+  dailyImpact: number;
+}
+
 export interface SimulationResult {
   scenario: WhatIfScenario;
   beforeMetrics: FinancialMetrics;
@@ -131,4 +165,6 @@ export interface SimulationResult {
   healthScoreDiff: number;
   explanation: string;
   forecast: DayForecastPoint[];
+  budgetPressureBefore?: BudgetPressurePoint[];
+  budgetPressureAfter?: BudgetPressurePoint[];
 }

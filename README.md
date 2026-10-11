@@ -9,19 +9,7 @@ A modern Gen Z personal finance survival operating system to manage ₹10,000 ac
 
 ## 📸 Screenshots
 
-> **Note:** Add real screenshots of the application here. To add screenshots:
-> 1. Take screenshots of the key screens (Overview, Transactions, What-If Lab, Insights)
-> 2. Place them in a `screenshots/` directory in the project root
-> 3. Update the image paths below
-
-**Overview Dashboard**
-![Overview](screenshots/overview.png)
-
-**What-If Lab**
-![What-If Lab](screenshots/whatif-lab.png)
-
-**Financial Insights**
-![Insights](screenshots/insights.png)
+> **Note:** Screenshots placeholder - add real screenshots when available
 
 ## 🎯 Problem Statement
 
@@ -38,8 +26,8 @@ Young adults and students often struggle with managing a fixed monthly budget, l
 - **Transaction Management**: Add, edit, and categorize expenses with 8 predefined categories
 - **Savings Goals**: Set and track savings targets with priority levels
 - **Subscription Tracking**: Monitor recurring expenses (monthly, quarterly, annual)
-- **What-If Lab**: Simulate financial decisions before spending with real-time impact analysis
-- **Financial Insights**: Rule-based recommendations based on spending velocity and patterns
+- **What-If Lab**: Simulate financial decisions before spending with real-time impact analysis, budget pressure tracking, and savings opportunity identification
+- **Financial Insights**: Rule-based recommendations based on spending velocity, patterns, and data-driven savings opportunities
 - **Health Scoring**: Transparent 0-100 financial health score with 4 contributing factors
 - **Day-by-Day Forecast**: Visual 30-day cash trajectory with projections
 - **Commitment Reservations**: Optional feature to reserve upcoming bills from daily allowance
@@ -54,7 +42,8 @@ Young adults and students often struggle with managing a fixed monthly budget, l
 - **Icons**: Lucide React 0.546.0
 - **Build Tool**: Vite 8.3.0
 - **State Management**: React Context API with localStorage persistence
-- **Financial Engine**: Pure TypeScript calculator functions
+- **Financial Engine**: Pure TypeScript calculator functions (no external APIs)
+- **Code Splitting**: Lazy-loaded tab components for improved initial load
 
 ## 📁 Project Structure
 
@@ -77,16 +66,18 @@ monthly/
 │   │   ├── categories.ts        # Category definitions
 │   │   └── initialData.ts       # Demo/initial state
 │   ├── engine/
-│   │   └── calculator.ts        # Pure financial calculation functions
+│   │   └── calculator.ts        # Pure financial calculation functions (metrics, forecasts, simulation, budget pressure analysis)
 │   ├── types/
 │   │   └── finance.ts           # TypeScript type definitions
 │   ├── utils/
+│   │   ├── budgetPresets.ts     # Budget preset configurations
 │   │   ├── formatters.ts        # Currency and number formatting
+│   │   ├── subscriptionHelpers.ts # Subscription filtering and aggregation helpers
 │   │   └── validation.ts        # Input validation utilities
-│   ├── App.tsx                  # Main application component
+│   ├── App.tsx                  # Main application component (with lazy-loaded tabs)
 │   ├── main.tsx                 # Application entry point
 │   └── index.css                # Global styles
-├── .env.example                 # Environment variables template
+├── .env.example                 # Environment variables template (optional)
 ├── package.json                 # Dependencies and scripts
 ├── render.yaml                  # Render deployment configuration
 ├── tsconfig.json                # TypeScript configuration
@@ -106,15 +97,9 @@ monthly/
 npm install
 ```
 
-### Step 2: Create Environment File
+### Step 2: Create Environment File (Optional)
 
-Create a `.env.local` file in the project root:
-
-```bash
-FEATHERLESS_API_KEY="your_featherless_api_key_here"
-```
-
-> **Note:** The app currently uses Featherless API for AI features. If you don't have an API key, the app will still function for core financial features.
+No environment variables are required for core functionality. The app uses pure TypeScript calculations and localStorage for persistence.
 
 ### Step 3: Run Development Server
 
@@ -227,6 +212,8 @@ The What-If Lab operates in a **hypothetical sandbox**:
 - The simulation engine creates a synthetic transaction and recalculates metrics
 - Forecast data shows both baseline and simulated trajectories
 - Users can apply or discard decisions after reviewing impact
+- Includes budget pressure analysis to identify categories at risk of overspending
+- Provides data-driven savings opportunities based on actual spending patterns
 
 ### Day Advancement
 
@@ -234,6 +221,15 @@ The `advanceDay` function allows interactive exploration:
 - Changes the `currentDay` without adding time-based transactions
 - Useful for testing "what if we're on Day 25" scenarios
 - Does not automatically charge subscriptions or add periodic income
+
+### Architecture Principles
+
+- **Separation of Concerns**: Business logic (calculations, filtering, aggregation) is isolated in `src/engine/calculator.ts` and `src/utils/`
+- **Pure Functions**: Financial calculations are pure functions with no side effects, ensuring testability and predictability
+- **Type Safety**: Comprehensive TypeScript types in `src/types/finance.ts` for all financial entities
+- **State Isolation**: What-If scenarios use synthetic state copies and cannot mutate actual financial data
+- **Performance**: Chart components and tab routes are lazy-loaded to reduce initial bundle size
+- **Accessibility**: Interactive elements include ARIA labels, focus states, and semantic HTML
 
 ## 🌐 Deployment
 
@@ -244,8 +240,7 @@ The `advanceDay` function allows interactive exploration:
 3. Click "New +" → "Web Service"
 4. Connect your GitHub repository
 5. Render will auto-detect the `render.yaml` configuration
-6. Add `FEATHERLESS_API_KEY` as an environment variable (optional)
-7. Click "Create Web Service"
+6. Click "Create Web Service"
 
 **render.yaml** is pre-configured with:
 - Build command: `npm install && npm run build`
@@ -258,9 +253,6 @@ The `advanceDay` function allows interactive exploration:
 npm install -g vercel
 vercel
 ```
-
-Add environment variable in Vercel dashboard:
-- `FEATHERLESS_API_KEY`: Your Featherless API key
 
 ### Deploy to Netlify
 
@@ -283,9 +275,7 @@ Then configure GitHub Pages:
 
 ### Environment Variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `FEATHERLESS_API_KEY` | No | Featherless API key for AI features (optional) |
+No environment variables are required. The application runs entirely client-side with localStorage persistence.
 
 ## ⚠️ Known Limitations
 

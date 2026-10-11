@@ -6,6 +6,8 @@ import {
   SimulationResult,
   DayForecastPoint,
   CategoryId,
+  BudgetPressurePoint,
+  SavingsOpportunity,
 } from '../types/finance';
 import { CATEGORY_LIST } from '../data/categories';
 import { formatINR } from '../utils/formatters';
@@ -312,6 +314,58 @@ export function generate30DayForecast(
   return points;
 }
 
+export function analyzeBudgetPressure(
+  state: FinancialState,
+  metrics: FinancialMetrics
+): BudgetPressurePoint[] {
+  const pressurePoints: BudgetPressurePoint[] = [];
+
+  Object.entries(metrics.categorySpending).forEach(([id, cat]) => {
+    if (cat.spent > cat.allocated) {
+      const overspentAmount = cat.spent - cat.allocated;
+      const overspentPercentage = Math.round((overspentAmount / cat.allocated) * 100);
+      const categoryName = CATEGORY_LIST.find((c) => c.id === id)?.name || id;
+
+      pressurePoints.push({
+        categoryId: id as CategoryId,
+        categoryName,
+        overspentAmount,
+        overspentPercentage,
+        isCritical: overspentPercentage >= 50,
+      });
+    }
+  });
+
+  return pressurePoints.sort((a, b) => b.overspentPercentage - a.overspentPercentage);
+}
+
+export function identifySavingsOpportunities(
+  state: FinancialState,
+  metrics: FinancialMetrics
+): SavingsOpportunity[] {
+  const opportunities: SavingsOpportunity[] = [];
+
+  Object.entries(metrics.categorySpending).forEach(([id, cat]) => {
+    if (cat.spent > 0) {
+      const categoryName = CATEGORY_LIST.find((c) => c.id === id)?.name || id;
+      const potentialSavings = Math.round(cat.spent * 0.15); // 15% reduction estimate
+      const reductionPercentage = 15;
+      const dailyImpact = Math.round(potentialSavings / metrics.remainingDays);
+
+      opportunities.push({
+        categoryId: id as CategoryId,
+        categoryName,
+        currentSpent: cat.spent,
+        potentialSavings,
+        reductionPercentage,
+        dailyImpact,
+      });
+    }
+  });
+
+  return opportunities.sort((a, b) => b.potentialSavings - a.potentialSavings).slice(0, 5);
+}
+
 export function simulateScenario(
   state: FinancialState,
   scenario: WhatIfScenario
@@ -342,6 +396,10 @@ export function simulateScenario(
   const monthEndDiff = afterMetrics.projectedClosingBalance - beforeMetrics.projectedClosingBalance;
   const healthScoreDiff = afterMetrics.healthScore - beforeMetrics.healthScore;
 
+  // Analyze budget pressure changes
+  const beforePressure = analyzeBudgetPressure(state, beforeMetrics);
+  const afterPressure = analyzeBudgetPressure(syntheticState, afterMetrics);
+
   // Natural language explanation as requested in spec
   let explanation = '';
   if (scenario.type === 'expense') {
@@ -371,5 +429,7 @@ export function simulateScenario(
     healthScoreDiff,
     explanation,
     forecast,
+    budgetPressureBefore: beforePressure,
+    budgetPressureAfter: afterPressure,
   };
 }

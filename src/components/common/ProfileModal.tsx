@@ -45,8 +45,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           <button
             onClick={onClose}
             className="text-zinc-400 hover:text-white p-1 rounded-md transition-colors"
+            aria-label="Close profile dialog"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 

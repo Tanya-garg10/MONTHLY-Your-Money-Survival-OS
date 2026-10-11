@@ -6,6 +6,11 @@ import { CategoryIcon } from '../common/CategoryIcon';
 import { formatINR } from '../../utils/formatters';
 import { ConfirmModal } from '../common/ConfirmModal';
 import {
+  filterSubscriptionsByStatus,
+  filterUpcomingSubscriptions,
+  calculateTotalSubscriptionAmount,
+} from '../../utils/subscriptionHelpers';
+import {
   Repeat,
   Plus,
   Pause,
@@ -104,13 +109,13 @@ export const SubscriptionsTab: React.FC = () => {
     setIsModalOpen(false);
   };
 
-  // Calculations for active vs cancelled savings
-  const activeSubs = state.subscriptions.filter((s) => s.status === 'active');
-  const pausedSubs = state.subscriptions.filter((s) => s.status === 'paused');
-  const cancelledSubs = state.subscriptions.filter((s) => s.status === 'cancelled');
+  // Calculations for active vs cancelled savings using helper functions
+  const activeSubs = filterSubscriptionsByStatus(state.subscriptions, 'active');
+  const pausedSubs = filterSubscriptionsByStatus(state.subscriptions, 'paused');
+  const cancelledSubs = filterSubscriptionsByStatus(state.subscriptions, 'cancelled');
 
-  const totalActiveMonthly = activeSubs.reduce((sum, s) => sum + s.amount, 0);
-  const totalSavedMonthly = cancelledSubs.reduce((sum, s) => sum + s.amount, 0);
+  const totalActiveMonthly = calculateTotalSubscriptionAmount(activeSubs);
+  const totalSavedMonthly = calculateTotalSubscriptionAmount(cancelledSubs);
 
   return (
     <div className="space-y-6 pb-12 animate-in fade-in duration-200">
@@ -126,9 +131,10 @@ export const SubscriptionsTab: React.FC = () => {
         </div>
         <button
           onClick={openAdd}
-          className="flex items-center gap-2 px-4 py-2 bg-[#C7FF4A] hover:bg-[#b5ee3a] text-black font-bold text-xs sm:text-sm rounded-lg transition-all shadow-sm"
+          className="flex items-center gap-2 px-4 py-2 bg-[#C7FF4A] hover:bg-[#b5ee3a] text-black font-bold text-xs sm:text-sm rounded-lg transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C7FF4A] focus:ring-offset-2 focus:ring-offset-[#0B0D0C]"
+          aria-label="Add new subscription"
         >
-          <Plus className="w-4 h-4 stroke-[2.5]" />
+          <Plus className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />
           <span>Add Subscription</span>
         </button>
       </div>

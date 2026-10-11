@@ -72,9 +72,9 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Basic validity check
-        if (parsed.cycleTotalDays && Array.isArray(parsed.transactions)) {
-          return parsed;
+        // Basic validity check - ensure required fields exist
+        if (parsed && typeof parsed === 'object' && parsed.cycleTotalDays && Array.isArray(parsed.transactions)) {
+          return parsed as FinancialState;
         }
       }
     } catch (e) {
@@ -93,7 +93,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     } catch (e) {
       console.error('Failed to save state to localStorage:', e);
     }
-  }, [state]);
+  }, [state, STORAGE_KEY]);
 
   const showToast = (message: string, type: ToastState['type'] = 'success') => {
     const id = Date.now();

@@ -24,8 +24,5 @@ export default defineConfig(() => {
     preview: {
       allowedHosts: ['monthly-your-money-survival-os.onrender.com', '.onrender.com'],
     },
-    css: {
-      postcss: false,
-    },
   };
 });

@@ -1,8 +1,8 @@
-import React, { useState, useMemo, lazy, Suspense } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { WhatIfScenario, CategoryId } from '../../types/finance';
 import { CATEGORY_LIST, CATEGORIES } from '../../data/categories';
-import { simulateScenario } from '../../engine/calculator';
+import { simulateScenario, identifySavingsOpportunities } from '../../engine/calculator';
 import { formatINR } from '../../utils/formatters';
 import { CategoryIcon } from '../common/CategoryIcon';
 import {
@@ -19,15 +19,12 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   Info,
+  Lightbulb,
+  Target,
 } from 'lucide-react';
 
-// Lazy load chart components
-const ResponsiveContainer = lazy(() => import('recharts').then(m => ({ default: m.ResponsiveContainer })));
-const LineChart = lazy(() => import('recharts').then(m => ({ default: m.LineChart })));
-const Line = lazy(() => import('recharts').then(m => ({ default: m.Line })));
-const XAxis = lazy(() => import('recharts').then(m => ({ default: m.XAxis })));
-const YAxis = lazy(() => import('recharts').then(m => ({ default: m.YAxis })));
-const Tooltip = lazy(() => import('recharts').then(m => ({ default: m.Tooltip })));
+// Import chart components directly since tab is already lazy-loaded
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
 
 interface PresetScenario {
   label: string;
@@ -154,7 +151,12 @@ export const WhatIfLabTab: React.FC = () => {
     applyWhatIfDecision(currentScenario);
   };
 
-  const { beforeMetrics, afterMetrics, explanation, forecast } = simResult;
+  const { beforeMetrics, afterMetrics, explanation, forecast, budgetPressureBefore, budgetPressureAfter } = simResult;
+
+  // Calculate savings opportunities based on current spending
+  const savingsOpportunities = useMemo(() => {
+    return identifySavingsOpportunities(state, beforeMetrics);
+  }, [state, beforeMetrics]);
 
   return (
     <div className="space-y-6 pb-12 animate-in fade-in duration-200">
@@ -536,63 +538,136 @@ export const WhatIfLabTab: React.FC = () => {
         </div>
 
         <div className="h-64 w-full">
-          <Suspense fallback={<div className="h-full flex items-center justify-center text-zinc-500 text-sm">Loading chart...</div>}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={forecast} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <XAxis
-                  dataKey="label"
-                  stroke="#4B5563"
-                  tick={{ fill: '#8E9590', fontSize: 11 }}
-                  interval={4}
-                />
-                <YAxis
-                  stroke="#4B5563"
-                  tick={{ fill: '#8E9590', fontSize: 11 }}
-                  tickFormatter={(v) => `₹${v}`}
-                />
-                <Tooltip
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      const data = payload[0].payload;
-                      return (
-                        <div className="p-3 bg-[#0B0D0C] border border-[#222925] rounded-lg shadow-xl text-xs space-y-1 font-mono-num">
-                          <div className="font-bold text-white border-b border-[#222925] pb-1">
-                            {data.label}
-                          </div>
-                          <div className="text-zinc-400">
-                            Baseline: {formatINR(data.projectedBalance)}
-                          </div>
-                          {data.simulatedBalance !== undefined && (
-                            <div className="text-[#C7FF4A] font-bold">
-                              Simulated: {formatINR(data.simulatedBalance)}
-                            </div>
-                          )}
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={forecast} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} aria-label="Baseline vs simulated trajectory comparison chart">
+              <XAxis
+                dataKey="label"
+                stroke="#4B5563"
+                tick={{ fill: '#8E9590', fontSize: 11 }}
+                interval={4}
+              />
+              <YAxis
+                stroke="#4B5563"
+                tick={{ fill: '#8E9590', fontSize: 11 }}
+                tickFormatter={(v) => `₹${v}`}
+              />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload;
+                    return (
+                      <div className="p-3 bg-[#0B0D0C] border border-[#222925] rounded-lg shadow-xl text-xs space-y-1 font-mono-num" role="tooltip">
+                        <div className="font-bold text-white border-b border-[#222925] pb-1">
+                          {data.label}
                         </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="projectedBalance"
-                  stroke="#6B7280"
-                  strokeDasharray="4 4"
-                  strokeWidth={2}
-                  dot={false}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="simulatedBalance"
-                  stroke="#C7FF4A"
-                  strokeWidth={2.5}
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </Suspense>
+                        <div className="text-zinc-400">
+                          Baseline: {formatINR(data.projectedBalance)}
+                        </div>
+                        {data.simulatedBalance !== undefined && (
+                          <div className="text-[#C7FF4A] font-bold">
+                            Simulated: {formatINR(data.simulatedBalance)}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+              <Line
+                type="monotone"
+                dataKey="projectedBalance"
+                stroke="#6B7280"
+                strokeDasharray="4 4"
+                strokeWidth={2}
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="simulatedBalance"
+                stroke="#C7FF4A"
+                strokeWidth={2.5}
+                dot={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </div>
+
+      {/* Budget Pressure Analysis */}
+      {(budgetPressureBefore && budgetPressureBefore.length > 0) || (budgetPressureAfter && budgetPressureAfter.length > 0) ? (
+        <div className="p-6 bg-[#141816] border border-[#222925] rounded-2xl space-y-4">
+          <div className="flex items-center gap-2 text-xs font-bold text-amber-400 uppercase tracking-wider font-mono-num">
+            <AlertTriangle className="w-4 h-4" />
+            <span>Budget Pressure Analysis</span>
+          </div>
+          <p className="text-sm text-zinc-300">
+            {type === 'expense' && budgetPressureAfter && budgetPressureBefore && budgetPressureAfter.length > budgetPressureBefore.length
+              ? `This purchase would increase overspent categories from ${budgetPressureBefore.length} to ${budgetPressureAfter.length}.`
+              : type === 'expense' && budgetPressureAfter && budgetPressureBefore && budgetPressureAfter.length < budgetPressureBefore.length
+              ? `This expense worsens ${budgetPressureAfter.length} overspent categories.`
+              : type === 'income'
+              ? 'Additional income helps reduce budget pressure.'
+              : 'No immediate budget pressure change from this scenario.'}
+          </p>
+          {budgetPressureAfter && budgetPressureAfter.length > 0 && (
+            <div className="space-y-2">
+              {budgetPressureAfter.slice(0, 3).map((pressure) => (
+                <div key={pressure.categoryId} className="flex items-center justify-between p-3 bg-[#0B0D0C] border border-[#222925] rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <CategoryIcon name={pressure.categoryId} className="w-4 h-4" />
+                    <span className="text-xs font-medium text-zinc-300">{pressure.categoryName}</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs font-mono-num text-rose-400">
+                      +{formatINR(pressure.overspentAmount)} over budget
+                    </div>
+                    <div className="text-[10px] text-zinc-500">
+                      {pressure.overspentPercentage}% over allocation
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      {/* Savings Opportunities */}
+      {savingsOpportunities.length > 0 && (
+        <div className="p-6 bg-[#141816] border border-[#222925] rounded-2xl space-y-4">
+          <div className="flex items-center gap-2 text-xs font-bold text-[#C7FF4A] uppercase tracking-wider font-mono-num">
+            <Lightbulb className="w-4 h-4" />
+            <span>Real Savings Opportunities</span>
+          </div>
+          <p className="text-sm text-zinc-300">
+            Based on your current spending patterns, here are the top categories where small adjustments could create meaningful runway.
+          </p>
+          <div className="space-y-2">
+            {savingsOpportunities.slice(0, 3).map((opp) => (
+              <div key={opp.categoryId} className="flex items-center justify-between p-3 bg-[#0B0D0C] border border-[#222925] rounded-lg">
+                <div className="flex items-center gap-2">
+                  <CategoryIcon name={opp.categoryId} className="w-4 h-4" />
+                  <div>
+                    <span className="text-xs font-medium text-zinc-300">{opp.categoryName}</span>
+                    <div className="text-[10px] text-zinc-500">
+                      {formatINR(opp.currentSpent)} spent
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs font-mono-num text-[#C7FF4A]">
+                    Save {formatINR(opp.potentialSavings)} ({opp.reductionPercentage}%)
+                  </div>
+                  <div className="text-[10px] text-zinc-500">
+                    +{formatINR(opp.dailyImpact)}/day extra allowance
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

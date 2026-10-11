@@ -130,9 +130,10 @@ export const SavingsGoalsTab: React.FC = () => {
         </div>
         <button
           onClick={openAdd}
-          className="flex items-center gap-2 px-4 py-2 bg-[#C7FF4A] hover:bg-[#b5ee3a] text-black font-bold text-xs sm:text-sm rounded-lg transition-all shadow-sm"
+          className="flex items-center gap-2 px-4 py-2 bg-[#C7FF4A] hover:bg-[#b5ee3a] text-black font-bold text-xs sm:text-sm rounded-lg transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C7FF4A] focus:ring-offset-2 focus:ring-offset-[#0B0D0C]"
+          aria-label="Create new savings goal"
         >
-          <Plus className="w-4 h-4 stroke-[2.5]" />
+          <Plus className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />
           <span>New Savings Goal</span>
         </button>
       </div>
@@ -311,37 +312,46 @@ export const SavingsGoalsTab: React.FC = () => {
       {/* Modal: Add / Edit Goal */}
       {isAddOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="w-full max-w-md bg-[#141816] border border-[#222925] rounded-xl p-6 shadow-2xl space-y-4">
-            <h2 className="text-base font-bold text-white">
+          <div
+            className="w-full max-w-md bg-[#141816] border border-[#222925] rounded-xl p-6 shadow-2xl space-y-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="savings-modal-title"
+          >
+            <h2 id="savings-modal-title" className="text-base font-bold text-white">
               {editingGoal ? 'Edit Savings Goal' : 'Create Savings Goal'}
             </h2>
 
             {formError && (
-              <div className="p-2.5 bg-rose-500/10 border border-rose-500/30 rounded-lg text-xs text-rose-400">
+              <div className="p-2.5 bg-rose-500/10 border border-rose-500/30 rounded-lg text-xs text-rose-400" role="alert">
                 {formError}
               </div>
             )}
 
             <form onSubmit={handleSaveGoal} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-zinc-400 mb-1">
+                <label htmlFor="savings-goal-name" className="block text-xs font-medium text-zinc-400 mb-1">
                   Goal Name
                 </label>
                 <input
+                  id="savings-goal-name"
                   type="text"
                   placeholder="e.g. Month-End Cushion, New Headphones"
                   value={goalName}
                   onChange={(e) => setGoalName(e.target.value)}
                   className="w-full px-3 py-2 bg-[#0B0D0C] border border-[#222925] focus:border-[#C7FF4A] rounded-lg text-xs text-white outline-none"
                   autoFocus
+                  aria-invalid={formError !== ''}
+                  aria-describedby={formError ? 'savings-form-error' : undefined}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-zinc-400 mb-1">
+                <label htmlFor="savings-target-amount" className="block text-xs font-medium text-zinc-400 mb-1">
                   Target Amount (₹)
                 </label>
                 <input
+                  id="savings-target-amount"
                   type="number"
                   min="1"
                   step="50"
@@ -354,10 +364,11 @@ export const SavingsGoalsTab: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-zinc-400 mb-1">
+                  <label htmlFor="savings-priority" className="block text-xs font-medium text-zinc-400 mb-1">
                     Priority
                   </label>
                   <select
+                    id="savings-priority"
                     value={priority}
                     onChange={(e) => setPriority(e.target.value as any)}
                     className="w-full px-3 py-2 bg-[#0B0D0C] border border-[#222925] text-xs text-white rounded-lg outline-none"
@@ -368,10 +379,11 @@ export const SavingsGoalsTab: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-zinc-400 mb-1">
+                  <label htmlFor="savings-target-day" className="block text-xs font-medium text-zinc-400 mb-1">
                     Target Cycle Day
                   </label>
                   <input
+                    id="savings-target-day"
                     type="number"
                     min="1"
                     max={state.cycleTotalDays}
@@ -383,10 +395,11 @@ export const SavingsGoalsTab: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-zinc-400 mb-1">
+                <label htmlFor="savings-notes" className="block text-xs font-medium text-zinc-400 mb-1">
                   Optional Notes
                 </label>
                 <input
+                  id="savings-notes"
                   type="text"
                   placeholder="What's this buffer for?"
                   value={notes}

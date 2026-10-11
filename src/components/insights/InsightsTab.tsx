@@ -3,6 +3,7 @@ import { useFinance } from '../../context/FinanceContext';
 import { formatINR, formatPercent } from '../../utils/formatters';
 import { CATEGORIES, CATEGORY_LIST } from '../../data/categories';
 import { CategoryIcon } from '../common/CategoryIcon';
+import { identifySavingsOpportunities } from '../../engine/calculator';
 import {
   TrendingUp,
   TrendingDown,
@@ -66,6 +67,11 @@ export const InsightsTab: React.FC = () => {
       };
     });
   }, [metrics.categorySpending]);
+
+  // Savings opportunities for actionable insights
+  const savingsOpportunities = useMemo(() => {
+    return identifySavingsOpportunities(state, metrics);
+  }, [state, metrics]);
 
   // Rule-based dynamic recommendations based on real data
   const dynamicTips = useMemo(() => {
@@ -151,6 +157,18 @@ export const InsightsTab: React.FC = () => {
         type: 'tip',
         actionLabel: 'Deposit Buffer',
         tab: 'savings',
+      });
+    }
+
+    // Rule 5: Data-driven savings opportunity
+    if (savingsOpportunities.length > 0) {
+      const topOpp = savingsOpportunities[0];
+      tips.push({
+        title: `Target ${topOpp.categoryName} for Savings`,
+        description: `Reducing ${topOpp.categoryName} spending by ${topOpp.reductionPercentage}% could save ${formatINR(topOpp.potentialSavings)}, adding ${formatINR(topOpp.dailyImpact)}/day to your safe allowance for the next ${metrics.remainingDays} days.`,
+        type: 'tip',
+        actionLabel: 'Review Budget',
+        tab: 'budget',
       });
     }
 
@@ -247,9 +265,9 @@ export const InsightsTab: React.FC = () => {
         </div>
 
         <div className="h-64 w-full">
-          <Suspense fallback={<div className="h-full flex items-center justify-center text-zinc-500 text-sm">Loading chart...</div>}>
+          <Suspense fallback={<div className="h-64 w-full flex items-center justify-center text-zinc-500 text-sm">Loading chart...</div>}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={categoryBarData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={categoryBarData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} aria-label="Category budget allocation vs actual spent comparison bar chart">
                 <XAxis dataKey="name" stroke="#4B5563" tick={{ fill: '#8E9590', fontSize: 11 }} />
                 <YAxis
                   stroke="#4B5563"
@@ -261,7 +279,7 @@ export const InsightsTab: React.FC = () => {
                     if (active && payload && payload.length) {
                       const data = payload[0].payload;
                       return (
-                        <div className="p-3 bg-[#0B0D0C] border border-[#222925] rounded-lg shadow-xl text-xs space-y-1 font-mono-num">
+                        <div className="p-3 bg-[#0B0D0C] border border-[#222925] rounded-lg shadow-xl text-xs space-y-1 font-mono-num" role="tooltip">
                           <div className="font-bold text-white">{data.fullName}</div>
                           <div className="text-zinc-400">Allocated: {formatINR(data.Allocated)}</div>
                           <div className="text-[#C7FF4A] font-bold">Spent: {formatINR(data.Spent)}</div>

@@ -4,6 +4,7 @@ import { CategoryId } from '../../types/finance';
 import { CATEGORY_LIST, CATEGORIES } from '../../data/categories';
 import { CategoryIcon } from '../common/CategoryIcon';
 import { formatINR, formatPercent } from '../../utils/formatters';
+import { applyBudgetPreset, BUDGET_PRESETS } from '../../utils/budgetPresets';
 import {
   AlertTriangle,
   Info,
@@ -26,33 +27,8 @@ export const BudgetPlannerTab: React.FC = () => {
   };
 
   const handleApplyPreset = (preset: 'balanced' | 'survival' | 'default') => {
-    if (preset === 'default') {
-      CATEGORY_LIST.forEach((cat) => {
-        updateCategoryBudget(cat.id, cat.defaultAllocation);
-      });
-      showToast('Reset category budgets to default allocations', 'info');
-    } else if (preset === 'survival') {
-      // Prioritize food and bills; cut shopping & entertainment
-      updateCategoryBudget('food', 4200);
-      updateCategoryBudget('bills', 2000);
-      updateCategoryBudget('transport', 1000);
-      updateCategoryBudget('emergency', 1000);
-      updateCategoryBudget('personal_care', 500);
-      updateCategoryBudget('shopping', 400);
-      updateCategoryBudget('entertainment', 500);
-      updateCategoryBudget('other', 400);
-      showToast('Applied Strict Survival budget preset', 'info');
-    } else if (preset === 'balanced') {
-      updateCategoryBudget('food', 3400);
-      updateCategoryBudget('bills', 1800);
-      updateCategoryBudget('transport', 1200);
-      updateCategoryBudget('shopping', 1000);
-      updateCategoryBudget('entertainment', 900);
-      updateCategoryBudget('personal_care', 700);
-      updateCategoryBudget('emergency', 600);
-      updateCategoryBudget('other', 400);
-      showToast('Applied Balanced preset', 'info');
-    }
+    applyBudgetPreset(preset, updateCategoryBudget);
+    showToast(`Applied ${BUDGET_PRESETS[preset].name} preset`, 'info');
   };
 
   return (
@@ -70,22 +46,25 @@ export const BudgetPlannerTab: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => handleApplyPreset('survival')}
-            className="px-3 py-1.5 bg-[#141816] hover:bg-[#191E1B] border border-[#222925] text-xs font-semibold text-zinc-300 hover:text-white rounded-lg transition-colors"
+            className="px-3 py-1.5 bg-[#141816] hover:bg-[#191E1B] border border-[#222925] text-xs font-semibold text-zinc-300 hover:text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#C7FF4A] focus:ring-offset-2 focus:ring-offset-[#0B0D0C]"
+            aria-label="Apply strict survival budget preset"
           >
             Strict Survival
           </button>
           <button
             onClick={() => handleApplyPreset('balanced')}
-            className="px-3 py-1.5 bg-[#141816] hover:bg-[#191E1B] border border-[#222925] text-xs font-semibold text-zinc-300 hover:text-white rounded-lg transition-colors"
+            className="px-3 py-1.5 bg-[#141816] hover:bg-[#191E1B] border border-[#222925] text-xs font-semibold text-zinc-300 hover:text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#C7FF4A] focus:ring-offset-2 focus:ring-offset-[#0B0D0C]"
+            aria-label="Apply balanced budget preset"
           >
             Balanced
           </button>
           <button
             onClick={() => handleApplyPreset('default')}
-            className="p-1.5 bg-[#141816] hover:bg-[#191E1B] border border-[#222925] text-zinc-400 hover:text-white rounded-lg transition-colors"
+            className="p-1.5 bg-[#141816] hover:bg-[#191E1B] border border-[#222925] text-zinc-400 hover:text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#C7FF4A] focus:ring-offset-2 focus:ring-offset-[#0B0D0C]"
             title="Reset to default allocations"
+            aria-label="Reset budgets to default allocations"
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -237,10 +216,11 @@ export const BudgetPlannerTab: React.FC = () => {
               {/* Slider & Quick Input */}
               <div className="pt-2 border-t border-[#222925] space-y-2">
                 <div className="flex items-center justify-between text-xs text-zinc-400">
-                  <span>Adjust Allocation</span>
+                  <label htmlFor={`budget-input-${cat.id}`}>Adjust Allocation</label>
                   <div className="flex items-center gap-1 font-mono-num">
-                    <span className="text-zinc-500">₹</span>
+                    <span className="text-zinc-500" aria-hidden="true">₹</span>
                     <input
+                      id={`budget-input-${cat.id}`}
                       type="number"
                       step="50"
                       min="0"
@@ -248,6 +228,7 @@ export const BudgetPlannerTab: React.FC = () => {
                       value={alloc}
                       onChange={(e) => handleSliderChange(cat.id, Number(e.target.value))}
                       className="w-20 px-2 py-1 bg-[#0B0D0C] border border-[#222925] rounded text-right text-xs text-white outline-none focus:border-[#C7FF4A]"
+                      aria-label={`${cat.name} budget allocation in rupees`}
                     />
                   </div>
                 </div>
@@ -259,6 +240,11 @@ export const BudgetPlannerTab: React.FC = () => {
                   value={alloc}
                   onChange={(e) => handleSliderChange(cat.id, Number(e.target.value))}
                   className="w-full h-1.5 bg-[#0B0D0C] rounded-lg appearance-none cursor-pointer accent-[#C7FF4A]"
+                  aria-label={`${cat.name} budget allocation slider`}
+                  aria-valuemin={0}
+                  aria-valuemax={5000}
+                  aria-valuenow={alloc}
+                  aria-valuetext={`${formatINR(alloc)} allocated`}
                 />
               </div>
             </div>
