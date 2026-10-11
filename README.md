@@ -2,14 +2,9 @@
 
 A modern Gen Z personal finance survival operating system to manage ₹10,000 across a 30-day budget cycle with an interconnected financial simulation engine.
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![React](https://img.shields.io/badge/React-19.0.1-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-7.0.2-blue.svg)
 ![Vite](https://img.shields.io/badge/Vite-8.3.0-purple.svg)
-
-## 📸 Screenshots
-
-> **Note:** Screenshots placeholder - add real screenshots when available
 
 ## 🎯 Problem Statement
 
@@ -309,10 +304,6 @@ No environment variables are required. The application runs entirely client-side
 - [ ] Verify localStorage persistence
 - [ ] Test on mobile viewport
 
-## 📝 License
-
-MIT License - feel free to use this project for personal or commercial purposes.
-
 ## 🤝 Contributing
 
 Contributions are welcome! Please follow these steps:
@@ -326,7 +317,5 @@ Contributions are welcome! Please follow these steps:
 ## 📧 Support
 
 For issues, questions, or suggestions, please open an issue on GitHub.
-
----
 
 Built with ❤️ for Gen Z financial literacy
