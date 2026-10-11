@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: monthly-money-survival-os
+    env: static
+    buildCommand: npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: FEATHERLESS_API_KEY
+        sync: false
